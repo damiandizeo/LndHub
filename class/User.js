@@ -2,6 +2,7 @@ import { Lock } from './Lock';
 
 var crypto = require('crypto');
 var lightningPayReq = require('bolt11');
+const bitcoin = require('bitcoinjs-lib');
 import { BigNumber } from 'bignumber.js';
 import { decodeRawHex } from '../btc-decoder';
 const config = require('../config');
@@ -67,15 +68,21 @@ export class User {
     return false;
   }
 
-  async create() {
-    let buffer = crypto.randomBytes(10);
-    let login = buffer.toString('hex');
+  async create(userid = null, login = null, password = null) {
+    let buffer = null;
 
-    buffer = crypto.randomBytes(10);
-    let password = buffer.toString('hex');
-
-    buffer = crypto.randomBytes(24);
-    let userid = buffer.toString('hex');
+    if( !login ) {
+      let buffer = crypto.randomBytes(10);
+      login = buffer.toString('hex');
+    }
+    if( !password ) {
+      buffer = crypto.randomBytes(10);
+      password = buffer.toString('hex');
+    }
+    if( !userid ) {
+      buffer = crypto.randomBytes(24);
+      userid = buffer.toString('hex');
+    }
     this._login = login;
     this._password = password;
     this._userid = userid;
@@ -448,7 +455,7 @@ export class User {
         transactions
           .filter((tx) => tx.label !== 'external' && !tx.label.includes('openchannel'))
           .map((tx) => {
-            const decodedTx = decodeRawHex(tx.raw_tx_hex);
+            const decodedTx = decodeRawHex(tx.raw_tx_hex, bitcoin.networks[config.network]);
             decodedTx.outputs.forEach((vout) =>
               outTxns.push({
                 // mark all as received, since external is filtered out
@@ -457,6 +464,7 @@ export class User {
                 amount: Number(vout.value),
                 address: vout.scriptPubKey.addresses[0],
                 time: tx.time_stamp,
+                tx_hash: tx.tx_hash
               }),
             );
           });
