@@ -205,14 +205,17 @@ class User {
       }
     }
 
+    console.log('calculatedBalance', calculatedBalance);
     let txs = await this.getTxs();
 
     for (let tx of txs) {
       if (tx.type === 'bitcoind_tx') {
         // topup
-        calculatedBalance += parseInt(tx.amount);
+        calculatedBalance += parseFloat(tx.amount);
+        console.log('tx.amount', parseFloat(tx.amount));
       } else {
         calculatedBalance -= +tx.value;
+        console.log('tx.amount', tx.value);
       }
     }
 
