@@ -405,14 +405,12 @@ class User {
     let txs = await this._listtransactions();
     txs = txs.result;
     let result = [];
-    let txsIdSent = [];
     let range = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
 
     for (let invoice of range) {
       invoice = JSON.parse(invoice);
 
       if (invoice.txid && invoice.type == 'bitcoind_tx') {
-        txsIdSent.push(invoice.txid);
         continue;
       }
 
@@ -450,9 +448,22 @@ class User {
     }
 
     for (let tx of txs) {
-      if (tx.confirmations >= 1 && (tx.address === addr && tx.category === 'receive' || txsIdSent.includes(tx.tx_hash))) {
+      if (tx.confirmations >= 1 && tx.address === addr && tx.category === 'receive') {
         tx.type = 'bitcoind_tx';
         result.push(tx);
+      }
+    }
+
+    let sentTxsRange = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
+
+    for (let sentTx of sentTxsRange) {
+      sentTx = JSON.parse(sentTx);
+
+      if (sentTx.txid && sentTx.type == 'bitcoind_tx') {
+        result.push({
+          tx_hash: sentTx.txid,
+          type: sentTx.type
+        });
       }
     }
 
@@ -531,12 +542,12 @@ class User {
         const outTxns = []; // on lightning incoming transactions have no labels
         // for now filter out known labels to reduce transactions
 
-        transactions.filter(tx => !tx.label.includes('openchannel')).map(tx => {
+        transactions.filter(tx => tx.label !== 'external' && !tx.label.includes('openchannel')).map(tx => {
           const decodedTx = (0, _btcDecoder.decodeRawHex)(tx.raw_tx_hex, bitcoin.networks[config.network]);
           let vout = decodedTx.outputs[0];
           outTxns.push({
             // mark all as received, since external is filtered out
-            category: tx.label == 'external' ? 'sent' : 'receive',
+            category: 'receive',
             confirmations: tx.num_confirmations,
             amount: Number(vout.value),
             address: vout.scriptPubKey.addresses[0],
@@ -560,19 +571,9 @@ class User {
     let txs = await this._listtransactions();
     txs = txs.result;
     let result = [];
-    let txsIdSent = [];
-    let range = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
-
-    for (let invoice of range) {
-      invoice = JSON.parse(invoice);
-
-      if (invoice.txid && invoice.type == 'bitcoind_tx') {
-        txsIdSent.push(invoice.txid);
-      }
-    }
 
     for (let tx of txs) {
-      if (tx.confirmations == 0 && (tx.address === addr && tx.category === 'receive' || txsIdSent.includes(tx.tx_hash))) {
+      if (tx.confirmations == 0 && tx.address === addr && tx.category === 'receive') {
         tx.timestamp = tx.timestamp * 1000;
         result.push(tx);
       }
