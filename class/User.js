@@ -448,22 +448,9 @@ class User {
     }
 
     for (let tx of txs) {
-      if (tx.confirmations >= 1 && tx.address === addr && tx.category === 'receive') {
+      if (tx.confirmations >= 1 && tx.address === addr) {
         tx.type = 'bitcoind_tx';
         result.push(tx);
-      }
-    }
-
-    let sentTxsRange = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
-
-    for (let sentTx of sentTxsRange) {
-      sentTx = JSON.parse(sentTx);
-
-      if (sentTx.txid && sentTx.type == 'bitcoind_tx') {
-        result.push({
-          tx_hash: sentTx.txid,
-          type: sentTx.type
-        });
       }
     }
 
@@ -534,28 +521,40 @@ class User {
 
   async _getChainTransactions() {
     return new Promise((resolve, reject) => {
-      this._lightning.getTransactions({}, (err, data) => {
+      this._lightning.getTransactions({}, async (err, data) => {
         if (err) return reject(err);
         const {
           transactions
         } = data;
-        const outTxns = []; // on lightning incoming transactions have no labels
-        // for now filter out known labels to reduce transactions
+        const txs = [];
+        let txsIdsSent = [];
+        let sentTxsRange = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
 
-        transactions.filter(tx => tx.label !== 'external' && !tx.label.includes('openchannel')).map(tx => {
-          const decodedTx = (0, _btcDecoder.decodeRawHex)(tx.raw_tx_hex, bitcoin.networks[config.network]);
-          let vout = decodedTx.outputs[0];
-          outTxns.push({
-            // mark all as received, since external is filtered out
-            category: 'receive',
-            confirmations: tx.num_confirmations,
-            amount: Number(vout.value),
-            address: vout.scriptPubKey.addresses[0],
-            time: tx.time_stamp,
-            tx_hash: tx.tx_hash
-          });
+        for (let sentTx of sentTxsRange) {
+          sentTx = JSON.parse(sentTx);
+
+          if (sentTx.txid && sentTx.type == 'bitcoind_tx') {
+            txsIdsSent.push(sentTx.txid);
+          }
+        }
+
+        let address = await this.getOrGenerateAddress();
+        transactions.filter(tx => !tx.label.includes('openchannel')).map(tx => {
+          delete tx['raw_tx_hex'];
+
+          if (tx.label == 'external' && txsIdsSent.includes(tx_hash)) {
+            tx.address = address;
+          } else {
+            tx.output_details.some((vout, i) => {
+              if (vout.address == address) {
+                tx.address = address;
+                return true;
+              }
+            });
+            txs.push(tx);
+          }
         });
-        resolve(outTxns);
+        resolve(txs);
       });
     });
   }
@@ -573,7 +572,7 @@ class User {
     let result = [];
 
     for (let tx of txs) {
-      if (tx.confirmations == 0 && tx.address === addr && tx.category === 'receive') {
+      if (tx.confirmations == 0 && tx.address === addr) {
         tx.timestamp = tx.timestamp * 1000;
         result.push(tx);
       }
