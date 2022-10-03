@@ -387,6 +387,7 @@ router.post('/sendcoins', async function (req, res) {
   }
 
   logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'address: ' + req.body.address]);
+  logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'amount: ' + req.body.amount]);
   if (!req.body.address) return errorBadArguments(res);
   let freeAmount = false;
 
@@ -395,12 +396,14 @@ router.post('/sendcoins', async function (req, res) {
     if (freeAmount <= 0) return errorBadArguments(res);
   }
 
+  logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'args ok']);
   let userBalance;
 
   try {
     userBalance = await u.getCalculatedBalance();
-  } catch (Error) {
-    return errorTryAgainLater(res);
+  } catch (err) {
+    logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'err: ' + err]);
+    return errorTryAgainLater(err);
   }
 
   logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'userBalance: ' + userBalance]);
