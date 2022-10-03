@@ -540,6 +540,8 @@ class User {
 
         let address = await this.getOrGenerateAddress();
         transactions.filter(tx => !tx.label.includes('openchannel')).map(tx => {
+          console.log('tx', tx);
+          console.log('tx.output_details', tx.output_details);
           delete tx['raw_tx_hex'];
 
           if (tx.label == 'external' && txsIdsSent.includes(tx.tx_hash)) {
