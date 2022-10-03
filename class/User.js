@@ -545,7 +545,7 @@ class User {
           if (tx.label == 'external' && txsIdsSent.includes(tx.tx_hash)) {
             tx.address = address;
           } else {
-            tx.output_details.forEach((vout, i) => {
+            tx.output_details.map((vout, i) => {
               if (vout.address == address) {
                 tx.address = address;
               }
