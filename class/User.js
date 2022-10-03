@@ -210,7 +210,7 @@ class User {
     for (let tx of txs) {
       if (tx.type === 'bitcoind_tx') {
         // topup
-        calculatedBalance += new _bignumber.BigNumber(tx.amount).multipliedBy(100000000).toNumber();
+        calculatedBalance += parseInt(tx.amount);
       } else {
         calculatedBalance -= +tx.value;
       }
