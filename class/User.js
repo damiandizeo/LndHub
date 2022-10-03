@@ -540,21 +540,22 @@ class User {
 
         let address = await this.getOrGenerateAddress();
         transactions.filter(tx => !tx.label.includes('openchannel')).map(tx => {
-          console.log('tx', tx);
-          console.log('tx.output_details', tx.output_details);
           delete tx['raw_tx_hex'];
 
           if (tx.label == 'external' && txsIdsSent.includes(tx.tx_hash)) {
             tx.address = address;
           } else {
-            tx.output_details.map((vout, i) => {
+            tx.output_details.some((vout, i) => {
               if (vout.address == address) {
                 tx.address = address;
+                return true;
               }
             });
-            txs.push(tx);
           }
+
+          txs.push(tx);
         });
+        console.log('_getChainTransactions', txs);
         resolve(txs);
       });
     });
