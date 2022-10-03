@@ -545,10 +545,9 @@ class User {
           if (tx.label == 'external' && txsIdsSent.includes(tx.tx_hash)) {
             tx.address = address;
           } else {
-            tx.output_details.some((vout, i) => {
+            tx.output_details.forEach((vout, i) => {
               if (vout.address == address) {
                 tx.address = address;
-                return true;
               }
             });
             txs.push(tx);
