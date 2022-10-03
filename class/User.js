@@ -402,6 +402,9 @@ class User {
 
   async getTxs() {
     const addr = await this.getOrGenerateAddress();
+    let txs = await this._listtransactions();
+    txs = txs.result;
+    let result = [];
     let txsIdSent = [];
     let range = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
 
@@ -444,10 +447,6 @@ class User {
       delete invoice.decoded;
       result.push(invoice);
     }
-
-    let txs = await this._listtransactions();
-    txs = txs.result;
-    let result = [];
 
     for (let tx of txs) {
       if (tx.confirmations >= 1 && (tx.address === addr && tx.category === 'receive' || txsIdSent.includes(tx.txid))) {
@@ -557,6 +556,9 @@ class User {
 
   async getPendingTxs() {
     const addr = await this.getOrGenerateAddress();
+    let txs = await this._listtransactions();
+    txs = txs.result;
+    let result = [];
     let txsIdSent = [];
     let range = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
 
@@ -565,10 +567,6 @@ class User {
         txsIdSent.push(invoice.txid);
       }
     }
-
-    let txs = await this._listtransactions();
-    txs = txs.result;
-    let result = [];
 
     for (let tx of txs) {
       if (tx.confirmations == 0 && (tx.address === addr && tx.category === 'receive' || txsIdSent.includes(tx.txid))) {
