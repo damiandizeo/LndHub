@@ -409,12 +409,13 @@ class User {
     let range = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
 
     for (let invoice of range) {
+      invoice = JSON.parse(invoice);
+
       if (invoice.txid && invoice.type == 'bitcoind_tx') {
         txsIdSent.push(invoice.txid);
         continue;
       }
 
-      invoice = JSON.parse(invoice);
       invoice.type = 'paid_invoice'; // for internal invoices it might not have properties `payment_route`  and `decoded`...
 
       if (invoice.payment_route) {
@@ -563,6 +564,8 @@ class User {
     let range = await this._redis.lrange('txs_for_' + this._userid, 0, -1);
 
     for (let invoice of range) {
+      invoice = JSON.parse(invoice);
+
       if (invoice.txid && invoice.type == 'bitcoind_tx') {
         txsIdSent.push(invoice.txid);
       }
