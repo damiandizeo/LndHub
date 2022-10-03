@@ -448,7 +448,7 @@ class User {
     }
 
     for (let tx of txs) {
-      if (tx.confirmations >= 1 && tx.address === addr) {
+      if (tx.num_confirmations >= 1 && tx.address === addr) {
         tx.type = 'bitcoind_tx';
         result.push(tx);
       }
@@ -555,7 +555,6 @@ class User {
 
           txs.push(tx);
         });
-        console.log('_getChainTransactions', txs);
         resolve(txs);
       });
     });
@@ -574,7 +573,7 @@ class User {
     let result = [];
 
     for (let tx of txs) {
-      if (tx.confirmations == 0 && tx.address === addr) {
+      if (tx.num_confirmations == 0 && tx.address === addr) {
         tx.timestamp = tx.timestamp * 1000;
         result.push(tx);
       }
