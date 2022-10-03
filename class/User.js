@@ -450,7 +450,7 @@ class User {
     }
 
     for (let tx of txs) {
-      if (tx.confirmations >= 1 && (tx.address === addr && tx.category === 'receive' || txsIdSent.includes(tx.txid))) {
+      if (tx.confirmations >= 1 && (tx.address === addr && tx.category === 'receive' || txsIdSent.includes(tx.tx_hash))) {
         tx.type = 'bitcoind_tx';
         result.push(tx);
       }
@@ -572,7 +572,7 @@ class User {
     }
 
     for (let tx of txs) {
-      if (tx.confirmations == 0 && (tx.address === addr && tx.category === 'receive' || txsIdSent.includes(tx.txid))) {
+      if (tx.confirmations == 0 && (tx.address === addr && tx.category === 'receive' || txsIdSent.includes(tx.tx_hash))) {
         tx.timestamp = tx.timestamp * 1000;
         result.push(tx);
       }
