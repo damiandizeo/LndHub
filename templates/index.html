@@ -11,7 +11,7 @@
     <meta content="BlueWallet server for the Lightning Network" property="og:description">
     <link rel="stylesheet" href="../static/css/style.css">
     <link rel=icon href=../static/img/favicon.png>
-    <title>LndHub - BlueWallet Lightning</title>
+    <title>LndHub - SATO Lightning</title>
     <meta content="lightning network, lndhub" name="keywords">
     <meta content="BlueWallet server for the Lightning Network" name="description">
 </head>
@@ -95,7 +95,7 @@
         <div class="box container16">
             <div class="table">
                 {{#channels}}
-                <a class="decor" href="https://1ml.com/node/{{remote_pubkey}}" target="_blank">
+                <a class="decor" href="https://1ml.com/{{network}}/node/{{remote_pubkey}}" target="_blank">
                     <div class="row">
                         <div class="name">
                             {{#name}}
@@ -109,10 +109,10 @@
                         <div class="graph"><progress id="progressbar" class="" value="{{local}}" max="{{total}}" style="width: {{size}}%"></progress></div>
                         {{^active}}
                         <div class="status"><span class="label right" title="inactive"></span></div>
-                        {{/active}} 
+                        {{/active}}
                         {{#active}}
                         <div class="status"><span class="label right" title="active"></span></div>
-                        {{/active}}                          
+                        {{/active}}
                     </div>
                 </a>
                 {{/channels}}
@@ -134,8 +134,8 @@
         {{/uris}}
     </div>
     <footer>
-        <a href="https://bluewallet.io/lndhub" target="_blank">about</a> | 
-        <a href="https://t.me/bluewallet" target="_blank">community</a>
+        <a href="https://www.bysato.com" target="_blank">about</a> |
+        <a href="https://www.bysato.com" target="_blank">community</a>
     </footer>
 </div>
 

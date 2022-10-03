@@ -1,10 +1,13 @@
+"use strict";
+
 const bitcoin = require('bitcoinjs-lib');
+
 const classify = require('bitcoinjs-lib/src/classify');
 
-const decodeFormat = (tx) => ({
+const decodeFormat = tx => ({
   txid: tx.getId(),
   version: tx.version,
-  locktime: tx.locktime,
+  locktime: tx.locktime
 });
 
 const decodeInput = function (tx) {
@@ -14,7 +17,7 @@ const decodeInput = function (tx) {
       txid: input.hash.reverse().toString('hex'),
       n: input.index,
       script: bitcoin.script.toASM(input.script),
-      sequence: input.sequence,
+      sequence: input.sequence
     });
   });
   return result;
@@ -30,20 +33,23 @@ const decodeOutput = function (tx, network) {
         asm: bitcoin.script.toASM(out.script),
         hex: out.script.toString('hex'),
         type: classify.output(out.script),
-        addresses: [],
-      },
+        addresses: []
+      }
     };
+
     switch (vout.scriptPubKey.type) {
       case 'pubkeyhash':
       case 'scripthash':
         vout.scriptPubKey.addresses.push(bitcoin.address.fromOutputScript(out.script, network));
         break;
+
       case 'witnesspubkeyhash':
       case 'witnessscripthash':
         const data = bitcoin.script.decompile(out.script)[1];
         vout.scriptPubKey.addresses.push(bitcoin.address.toBech32(data, 0, network.bech32));
         break;
     }
+
     return vout;
   };
 
@@ -72,6 +78,7 @@ class TxDecoder {
     result.inputs = self.inputs;
     return result;
   }
+
 }
 
 module.exports.decodeRawHex = (rawTx, network = bitcoin.networks.bitcoin) => {

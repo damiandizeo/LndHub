@@ -1,8 +1,17 @@
-var crypto = require('crypto');
-var lightningPayReq = require('bolt11');
-import { BigNumber } from 'bignumber.js';
+"use strict";
 
-export class Paym {
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Paym = void 0;
+
+var _bignumber = require("bignumber.js");
+
+var crypto = require('crypto');
+
+var lightningPayReq = require('bolt11');
+
+class Paym {
   constructor(redis, bitcoindrpc, lightning) {
     this._redis = redis;
     this._bitcoindrpc = bitcoindrpc;
@@ -19,7 +28,9 @@ export class Paym {
   async decodePayReqViaRpc(invoice) {
     let that = this;
     return new Promise(function (resolve, reject) {
-      that._lightning.decodePayReq({ pay_req: invoice }, function (err, info) {
+      that._lightning.decodePayReq({
+        pay_req: invoice
+      }, function (err, info) {
         if (err) return reject(err);
         that._decoded = info;
         return resolve(info);
@@ -30,12 +41,13 @@ export class Paym {
   async queryRoutes() {
     if (!this._bolt11) throw new Error('bolt11 is not provided');
     if (!this._decoded) await this.decodePayReqViaRpc(this._bolt11);
-
     var request = {
       pub_key: this._decoded.destination,
       amt: this._decoded.num_satoshis,
       final_cltv_delta: 144,
-      fee_limit: { fixed: Math.floor(this._decoded.num_satoshis * forwardFee) + 1 },
+      fee_limit: {
+        fixed: Math.floor(this._decoded.num_satoshis * forwardFee) + 1
+      }
     };
     let that = this;
     return new Promise(function (resolve, reject) {
@@ -49,14 +61,13 @@ export class Paym {
   async sendToRouteSync(routes) {
     if (!this._bolt11) throw new Error('bolt11 is not provided');
     if (!this._decoded) await this.decodePayReqViaRpc(this._bolt11);
-
     let request = {
       payment_hash_string: this._decoded.payment_hash,
-      route: routes[0],
+      route: routes[0]
     };
-
-    console.log('sendToRouteSync:', { request });
-
+    console.log('sendToRouteSync:', {
+      request
+    });
     let that = this;
     return new Promise(function (resolve, reject) {
       that._lightning.sendToRouteSync(request, function (err, response) {
@@ -78,12 +89,14 @@ export class Paym {
     if (payment.payment_error && payment.payment_error.indexOf('already paid') !== -1) {
       // already paid
       this._isPaid = true;
+
       if (this._decoded) {
         payment.decoded = this._decoded;
-        if (this._bolt11) payment.pay_req = this._bolt11;
-        // trying to guess the fee
+        if (this._bolt11) payment.pay_req = this._bolt11; // trying to guess the fee
+
         payment.payment_route = payment.payment_route || {};
         payment.payment_route.total_fees = Math.floor(this._decoded.num_satoshis * forwardFee); // we dont know the exact fee, so we use max (same as fee_limit)
+
         payment.payment_route.total_amt = this._decoded.num_satoshis;
       }
     }
@@ -111,13 +124,14 @@ export class Paym {
 
     return payment;
   }
-
   /**
    * Returns NULL if unknown, true if its paid, false if its unpaid
    * (judging by error in sendPayment response)
    *
    * @returns {boolean|null}
    */
+
+
   getIsPaid() {
     return this._isPaid;
   }
@@ -149,7 +163,9 @@ export class Paym {
   async getPaymentHash() {
     if (!this._bolt11) throw new Error('bolt11 is not provided');
     if (!this._decoded) await this.decodePayReqViaRpc(this._bolt11);
-
     return this._decoded['payment_hash'];
   }
+
 }
+
+exports.Paym = Paym;

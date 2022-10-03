@@ -1,7 +1,15 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Invo = void 0;
+
 var crypto = require('crypto');
+
 var lightningPayReq = require('bolt11');
 
-export class Invo {
+class Invo {
   constructor(redis, bitcoindrpc, lightning) {
     this._redis = redis;
     this._bitcoindrpc = bitcoindrpc;
@@ -19,11 +27,13 @@ export class Invo {
     if (!this._bolt11) throw new Error('bolt11 is not provided');
     const decoded = lightningPayReq.decode(this._bolt11);
     let paymentHash = false;
+
     for (const tag of decoded.tags) {
       if (tag.tagName === 'payment_hash') {
         paymentHash = tag.data;
       }
     }
+
     if (!paymentHash) throw new Error('Could not find payment hash in invoice tags');
     return await this._getIsPaymentHashMarkedPaidInDatabase(paymentHash);
   }
@@ -32,11 +42,13 @@ export class Invo {
     if (!this._bolt11) throw new Error('bolt11 is not provided');
     const decoded = lightningPayReq.decode(this._bolt11);
     let paymentHash = false;
+
     for (const tag of decoded.tags) {
       if (tag.tagName === 'payment_hash') {
         paymentHash = tag.data;
       }
     }
+
     if (!paymentHash) throw new Error('Could not find payment hash in invoice tags');
     return await this._setIsPaymentHashPaidInDatabase(paymentHash, decoded.satoshis);
   }
@@ -45,11 +57,13 @@ export class Invo {
     if (!this._bolt11) throw new Error('bolt11 is not provided');
     const decoded = lightningPayReq.decode(this._bolt11);
     let paymentHash = false;
+
     for (const tag of decoded.tags) {
       if (tag.tagName === 'payment_hash') {
         paymentHash = tag.data;
       }
     }
+
     if (!paymentHash) throw new Error('Could not find payment hash in invoice tags');
     return await this._setIsPaymentHashPaidInDatabase(paymentHash, false);
   }
@@ -70,17 +84,20 @@ export class Invo {
     if (!this._bolt11) throw new Error('bolt11 is not provided');
     const decoded = lightningPayReq.decode(this._bolt11);
     let paymentHash = false;
+
     for (const tag of decoded.tags) {
       if (tag.tagName === 'payment_hash') {
         paymentHash = tag.data;
       }
     }
+
     if (!paymentHash) throw new Error('Could not find payment hash in invoice tags');
     return await this._redis.get('preimage_for_' + paymentHash);
   }
 
   async savePreimage(preimageHex) {
     const paymentHashHex = require('crypto').createHash('sha256').update(Buffer.from(preimageHex, 'hex')).digest('hex');
+
     const key = 'preimage_for_' + paymentHashHex;
     await this._redis.set(key, preimageHex);
     await this._redis.expire(key, 3600 * 24 * 30); // 1 month
@@ -90,24 +107,25 @@ export class Invo {
     let buffer = crypto.randomBytes(32);
     return buffer.toString('hex');
   }
-
   /**
    * Queries LND ofr all user invoices
    *
    * @return {Promise<array>}
    */
+
+
   async listInvoices() {
     return new Promise((resolve, reject) => {
-      this._lightning.listInvoices(
-        {
-          num_max_invoices: 99000111,
-          reversed: true,
-        },
-        function (err, response) {
-          if (err) return reject(err);
-          resolve(response);
-        },
-      );
+      this._lightning.listInvoices({
+        num_max_invoices: 99000111,
+        reversed: true
+      }, function (err, response) {
+        if (err) return reject(err);
+        resolve(response);
+      });
     });
   }
+
 }
+
+exports.Invo = Invo;

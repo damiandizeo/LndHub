@@ -1,15 +1,25 @@
+"use strict";
+
 const express = require('express');
+
 const router = express.Router();
+
 const fs = require('fs');
+
 const mustache = require('mustache');
+
 const lightning = require('../lightning');
+
 const logger = require('../utils/logger');
+
 const qr = require('qr-image');
 
 let lightningGetInfo = {};
 let lightningListChannels = {};
+
 function updateLightning() {
   console.log('updateLightning()');
+
   try {
     lightning.getInfo({}, function (err, info) {
       if (err) {
@@ -17,44 +27,50 @@ function updateLightning() {
         process.exit(4);
         return;
       }
+
       lightningGetInfo = info;
     });
-
     lightning.listChannels({}, function (err, response) {
       if (err) {
         console.error('lnd failure:', err);
         process.exit(4);
         return;
       }
+
       console.log('updated');
       lightningListChannels = response;
       let channels = [];
       let max_chan_capacity = -1;
+
       for (const channel of lightningListChannels.channels) {
         max_chan_capacity = Math.max(max_chan_capacity, channel.capacity);
       }
+
       for (let channel of lightningListChannels.channels) {
         let magic = max_chan_capacity / 100;
         channel.local = channel.local_balance * 1;
         channel.total = channel.capacity * 1;
         channel.size = Math.round(channel.capacity / magic); // total size of the bar on page. 100% means it takes maximum width
+
         channel.capacity_btc = channel.capacity / 100000000;
         channel.name = pubkey2name[channel.remote_pubkey];
+
         if (channel.name) {
           channels.unshift(channel);
         } else {
           channels.push(channel);
         }
       }
+
       lightningListChannels.channels = channels;
     });
   } catch (Err) {
     console.log(Err);
   }
 }
+
 updateLightning();
 setInterval(updateLightning, 60000);
-
 const pubkey2name = {
   '03e50492eab4107a773141bb419e107bda3de3d55652e6e1a41225f06a0bbf2d56': 'yalls.org',
   '0232e20e7b68b9b673fb25f48322b151a93186bffe4550045040673797ceca43cf': 'zigzag.io',
@@ -86,34 +102,38 @@ const pubkey2name = {
   '036b53093df5a932deac828cca6d663472dbc88322b05eec1d42b26ab9b16caa1c': 'okcoin',
   '038f8f113c580048d847d6949371726653e02b928196bad310e3eda39ff61723f6': 'magnetron',
   '03829249ef39746fd534a196510232df08b83db0967804ec71bf4120930864ff97': 'blokada.org',
-  '02ce691b2e321954644514db708ba2a72769a6f9142ac63e65dd87964e9cf2add9': 'Satoshis.Games',
+  '02ce691b2e321954644514db708ba2a72769a6f9142ac63e65dd87964e9cf2add9': 'Satoshis.Games'
 };
-
 router.get('/', function (req, res) {
   logger.log('/', [req.id]);
+
   if (!lightningGetInfo) {
     console.error('lnd failure');
     process.exit(3);
   }
+
   res.setHeader('Content-Type', 'text/html');
   let html = fs.readFileSync('./templates/index.html').toString('utf8');
-  return res.status(200).send(mustache.render(html, Object.assign({}, lightningGetInfo, lightningListChannels)));
+  return res.status(200).send(mustache.render(html, Object.assign({}, lightningGetInfo, lightningListChannels, {
+    network: 'testnet'
+  })));
 });
-
 router.get('/qr', function (req, res) {
   let host = req.headers.host;
+
   if (process.env.TOR_URL) {
     host = process.env.TOR_URL;
   }
+
   const customPath = req.url.replace('/qr', '');
-  const url = 'bluewallet:setlndhuburl?url=' + encodeURIComponent(req.protocol + '://' + host + customPath);
-  var code = qr.image(url, { type: 'png' });
+  const url = 'btcwallet://setlndhuburl?url=' + encodeURIComponent(req.protocol + '://' + host + customPath);
+  var code = qr.image(url, {
+    type: 'png'
+  });
   res.setHeader('Content-type', 'image/png');
   code.pipe(res);
 });
-
 router.use(function (req, res) {
   res.status(404).send('404');
 });
-
 module.exports = router;
