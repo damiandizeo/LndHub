@@ -386,7 +386,7 @@ router.post('/sendcoins', async function (req, res) {
     return errorBadAuth(res);
   }
 
-  logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'invoice: ' + req.body.invoice]);
+  logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'address: ' + req.body.address]);
   if (!req.body.address) return errorBadArguments(res);
   let freeAmount = false;
 
@@ -403,20 +403,22 @@ router.post('/sendcoins', async function (req, res) {
     return errorTryAgainLater(res);
   }
 
-  if (userBalance >= freeAmount + Math.floor(info.freeAmount * forwardFee) + 1) {
+  logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'userBalance: ' + userBalance]);
+  logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'user will pay: ' + (freeAmount + Math.floor(freeAmount * forwardFee) + 1)]);
+
+  if (userBalance >= freeAmount + Math.floor(freeAmount * forwardFee) + 1) {
     lightning.sendCoins({
       addr: req.body.address,
       amount: freeAmount
     }, function (err, sendCoinsRes) {
       if (err) {
-        console.error('lnd failure');
-        console.dir(err);
+        logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'err: ' + err]);
         process.exit(3);
       }
 
       if (sendCoinsRes && sendCoinsRes.txid) {
-        console.info('lnd sendCoins:', sendCoinsRes);
         u.savePaidBtcTransaction(sendCoinsRes.txid);
+        logger.log('/sendcoins', [req.id, 'userid: ' + u.getUserId(), 'sendCoinsRes: ' + sendCoinsRes.txid]);
         return res.send({
           txid: sendCoinsRes.txid
         });
