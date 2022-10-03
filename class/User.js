@@ -542,7 +542,7 @@ class User {
         transactions.filter(tx => !tx.label.includes('openchannel')).map(tx => {
           delete tx['raw_tx_hex'];
 
-          if (tx.label == 'external' && txsIdsSent.includes(tx_hash)) {
+          if (tx.label == 'external' && txsIdsSent.includes(tx.tx_hash)) {
             tx.address = address;
           } else {
             tx.output_details.some((vout, i) => {
