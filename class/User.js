@@ -252,10 +252,10 @@ class User {
   }
 
   async savePaidBtcTransaction(txid) {
-    return await this._redis.rpush('txs_for_' + this._userid, {
+    return await this._redis.rpush('txs_for_' + this._userid, JSON.stringify({
       txid: txid,
       type: 'bitcoind_tx'
-    });
+    }));
   }
 
   async saveUserInvoice(doc) {
