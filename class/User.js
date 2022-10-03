@@ -468,20 +468,19 @@ class User {
 
 
   async _listtransactions() {
-    let response = _listtransactions_cache;
-
-    if (response) {
-      if (+new Date() > _listtransactions_cache_expiry_ts) {
-        // invalidate cache
-        response = _listtransactions_cache = false;
-      } else {
-        try {
-          return JSON.parse(response);
-        } catch (_) {// nop
-        }
-      }
-    }
-
+    // let response = _listtransactions_cache;
+    // if (response) {
+    //   if (+new Date() > _listtransactions_cache_expiry_ts) {
+    //     // invalidate cache
+    //     response = _listtransactions_cache = false;
+    //   } else {
+    //     try {
+    //       return JSON.parse(response);
+    //     } catch (_) {
+    //       // nop
+    //     }
+    //   }
+    // }
     try {
       let ret = {
         result: []
@@ -534,7 +533,8 @@ class User {
 
         transactions.filter(tx => !tx.label.includes('openchannel')).map(tx => {
           const decodedTx = (0, _btcDecoder.decodeRawHex)(tx.raw_tx_hex, bitcoin.networks[config.network]);
-          decodedTx.outputs.forEach(vout => outTxns.push({
+          let vout = decodedTx.outputs[0];
+          outTxns.push({
             // mark all as received, since external is filtered out
             category: tx.label == 'external' ? 'sent' : 'receive',
             confirmations: tx.num_confirmations,
@@ -542,7 +542,7 @@ class User {
             address: vout.scriptPubKey.addresses[0],
             time: tx.time_stamp,
             tx_hash: tx.tx_hash
-          }));
+          });
         });
         resolve(outTxns);
       });
