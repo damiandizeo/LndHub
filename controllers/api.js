@@ -379,6 +379,24 @@ router.post('/payinvoice', async function (req, res) {
     }
   });
 });
+router.post('/claiminvoice', async function (req, res) {
+  let u = new _class.User(redis, bitcoinclient, lightning);
+
+  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+    return errorBadAuth(res);
+  }
+
+  logger.log('/claiminvoice', [req.id, 'userid: ' + u.getUserId(), 'invoice: ' + req.body.invoice]);
+  if (!req.body.invoice) return errorBadArguments(res);
+  const invoice = new _class.Invo(redis, bitcoinclient, lightning);
+  invoice.setInvoice(req.body.invoice);
+  await invoice.markAsPaidInDatabase();
+  const preimage = await invoice.getPreimage();
+  return res.send({
+    payment_request: req.body.invoice,
+    payment_preimage: preimage
+  });
+});
 router.post('/sendcoins', async function (req, res) {
   let u = new _class.User(redis, bitcoinclient, lightning);
 
