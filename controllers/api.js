@@ -77,6 +77,17 @@ lightning.getInfo({}, function (err, info) {
 let call = lightning.channelAcceptor({});
 call.on('data', function (response) {
   console.log('channelAcceptor response', response);
+  call.write({
+    accept: true,
+    pending_chan_id: response.pending_chan_id,
+    csv_delay: response.csv_delay,
+    reserve_sat: response.channel_reserve,
+    in_flight_max_msat: response.max_value_in_flight,
+    max_htlc_count: response.max_accepted_htlcs,
+    min_htlc_in: parseInt(response.min_htlc),
+    min_accept_depth: 0,
+    zero_conf: true
+  });
 });
 call.on('status', function (status) {
   console.log('channelAcceptor status', status);
