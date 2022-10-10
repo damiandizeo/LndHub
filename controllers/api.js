@@ -74,6 +74,16 @@ lightning.getInfo({}, function (err, info) {
     identity_pubkey = info.identity_pubkey;
   }
 });
+let call = lightning.channelAcceptor({});
+call.on('data', function (response) {
+  console.log('channelAcceptor response', response);
+});
+call.on('status', function (status) {
+  console.log('channelAcceptor status', status);
+});
+call.on('end', function () {
+  console.log('channelAcceptor end', status);
+});
 redis.info(function (err, info) {
   if (err || !info) {
     console.error('redis failure');
